@@ -123,6 +123,26 @@ class TestGateRules:
         assert rec.verdict is Verdict.CONDITIONAL_GO
         assert any(c.startswith("weakest signal: coverage") for c in rec.conditions)
 
+    def test_name_collision_does_not_excuse_real_failure(self):
+        """ADR-002 safety property: the join is on full node ids, so a flaky
+        test named like a real failure in another file cannot excuse it.
+        Under the rejected bare-name join, this exact case flips NO GO to
+        CONDITIONAL GO — a false go (see docs/bug-evidence.md #2)."""
+        signals = self.make_signals(
+            tests=TestResultsSignal(
+                total=10,
+                passed=9,
+                failed=1,
+                skipped=0,
+                failed_test_ids=["tests/test_upload_api.py::test_upload"],
+            ),
+            flakiness=FlakinessSignal(
+                flaky_test_ids=["tests/test_upload_ui.py::test_upload"]
+            ),
+        )
+        rec = ReleaseEvaluator().evaluate(signals)
+        assert rec.verdict is Verdict.NO_GO
+
 
 class FakeLLMClient:
     def __init__(self, response: str = "Narrated rationale.", error: Exception | None = None):

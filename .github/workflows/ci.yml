@@ -16,4 +16,14 @@ jobs:
       - name: Install package with dev extras
         run: pip install -e .[dev]
       - name: Run test suite (zero API keys by design)
-        run: python -m pytest
+        run: |
+          coverage run -m pytest --junitxml=reports/junit.xml
+          coverage xml
+      - name: Dogfood - gate this build with releaseguard itself
+        run: |
+          status=0
+          releaseguard --junit reports/junit.xml --coverage coverage.xml > verdict.txt || status=$?
+          cat verdict.txt
+          { echo "## ReleaseGuard dogfood verdict"; echo '```'; cat verdict.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          echo "exit code: $status (0 GO, 1 CONDITIONAL GO, 2 NO GO, 3 error)"
+          test "$status" -le 1
