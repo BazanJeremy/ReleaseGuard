@@ -2,7 +2,7 @@
 
 > Release-readiness agent — fuses test results, coverage, and flakiness signals into a single, explainable **go / no-go** recommendation.
 
-**Status: 🚧 S2 — Implementation in progress.** Portfolio project P5 of a 6-project AI Test Engineering portfolio.
+**Status: 🚧 S3 — Integration in progress.** Portfolio project P5 of a 6-project AI Test Engineering portfolio.
 
 ## The problem
 
@@ -19,8 +19,8 @@ An optional LLM layer (System 2) narrates borderline verdicts; the deterministic
 ## Roadmap
 
 - ✅ **S1 — Architecture**: ADR-001 gate model, Pydantic v2 models, fixtures, contract tests
-- **S2 — Implementation**: parsers, scoring engine, env-gated LLM narrative ⟵ *current*
-- **S3 — Integration**: CLI, dogfood CI gate, senior README
+- ✅ **S2 — Implementation**: parsers, scoring engine, env-gated LLM narrative
+- **S3 — Integration**: CLI, dogfood CI gate, senior README ⟵ *current*
 
 ## Development
 
