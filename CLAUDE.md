@@ -5,8 +5,8 @@
 
 ## Project State — READ FIRST
 
-- **Status: 🚧 S1 — Architecture in progress (started 2026-07-10).**
-- ADR-001 (release gate model) drafted, pending user validation. Models, fixtures, and contract tests land after validation.
+- **Status: ✅ S1 delivered (2026-07-10) — next: S2, parsers + scoring engine.**
+- S1: ADR-001 accepted (hard gates + weighted score), Pydantic v2 models, policy constants module, three canonical scenario fixtures (GO / NO GO / CONDITIONAL), 39 contract tests, zero-key CI.
 - Work discipline: **small, session-scoped increments** — one concern per session, plan validated before code, feature branch + PR to `main`.
 
 ## Project Goal
