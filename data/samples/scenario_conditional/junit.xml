@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="14.882" timestamp="2026-07-10T10:02:17.222333" hostname="ci-linux-02">
+    <testcase classname="tests.test_auth" name="test_login_happy_path" time="0.805"/>
+    <testcase classname="tests.test_auth" name="test_login_bad_password" time="0.427"/>
+    <testcase classname="tests.test_payment" name="test_refund_idempotency" time="1.187"/>
+    <testcase classname="tests.test_payment" name="test_currency_rounding" time="0.309"/>
+    <testcase classname="tests.test_search" name="test_search_pagination" time="6.921">
+      <failure message="TimeoutError: results page did not load within 5s">tests/test_search.py:41: TimeoutError</failure>
+    </testcase>
+    <testcase classname="tests.test_search" name="test_search_empty_query" time="0.203"/>
+    <testcase classname="tests.test_cache" name="test_cache_eviction" time="1.544"/>
+    <testcase classname="tests.test_cache" name="test_cache_hit_ratio" time="0.688"/>
+    <testcase classname="tests.test_export" name="test_csv_export" time="3.402"/>
+    <testcase classname="tests.test_export" name="test_pdf_export" time="0.941"/>
+  </testsuite>
+</testsuites>

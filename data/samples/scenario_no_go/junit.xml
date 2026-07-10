@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="pytest" errors="0" failures="2" skipped="0" tests="8" time="11.207" timestamp="2026-07-10T09:31:44.654321" hostname="ci-linux-01">
+    <testcase classname="tests.test_auth" name="test_login_happy_path" time="0.798"/>
+    <testcase classname="tests.test_auth" name="test_login_bad_password" time="0.433"/>
+    <testcase classname="tests.test_payment" name="test_refund_idempotency" time="1.911">
+      <failure message="AssertionError: refund applied twice for order ORD-4411">tests/test_payment.py:87: AssertionError</failure>
+    </testcase>
+    <testcase classname="tests.test_payment" name="test_currency_rounding" time="0.302">
+      <failure message="AssertionError: expected 10.05 CHF, got 10.04 CHF">tests/test_payment.py:112: AssertionError</failure>
+    </testcase>
+    <testcase classname="tests.test_search" name="test_search_pagination" time="2.243"/>
+    <testcase classname="tests.test_search" name="test_search_empty_query" time="0.199"/>
+    <testcase classname="tests.test_export" name="test_csv_export" time="3.388"/>
+    <testcase classname="tests.test_export" name="test_pdf_export" time="0.933"/>
+  </testsuite>
+</testsuites>

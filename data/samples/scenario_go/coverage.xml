@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<coverage line-rate="0.88" branch-rate="0.74" lines-covered="1056" lines-valid="1200" complexity="0" version="7.6.1" timestamp="1783069200">
+  <sources>
+    <source>src</source>
+  </sources>
+  <packages/>
+</coverage>
