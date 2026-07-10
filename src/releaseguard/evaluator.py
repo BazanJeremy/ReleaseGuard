@@ -41,16 +41,38 @@ class NoTestEvidenceError(ValueError):
 
 
 class ReleaseEvaluator:
-    """Fuses the signals into a :class:`ReleaseRecommendation` (ADR-001)."""
+    """Fuses the signals into a :class:`ReleaseRecommendation` (ADR-001).
 
-    def __init__(self, llm_client: LLMClient | None = None) -> None:
+    Thresholds are per-run tunable (CLI flags, ADR-003); the signal weights
+    are deliberately not — changing the weighting is a governance decision
+    that goes through a superseding ADR, not a command-line flag.
+    """
+
+    def __init__(
+        self,
+        llm_client: LLMClient | None = None,
+        *,
+        coverage_floor: float = policy.COVERAGE_FLOOR,
+        coverage_target: float = policy.COVERAGE_TARGET,
+        go_threshold: float = policy.GO_THRESHOLD,
+        flaky_penalty: float = policy.FLAKY_PENALTY,
+    ) -> None:
+        if not coverage_floor < coverage_target:
+            raise ValueError(
+                f"coverage_floor ({coverage_floor}) must be below "
+                f"coverage_target ({coverage_target})"
+            )
         self._llm_client = llm_client
+        self._coverage_floor = coverage_floor
+        self._coverage_target = coverage_target
+        self._go_threshold = go_threshold
+        self._flaky_penalty = flaky_penalty
 
     def evaluate(self, signals: ReleaseSignals) -> ReleaseRecommendation:
         executed = signals.tests.total - signals.tests.skipped
         if executed == 0:
             raise NoTestEvidenceError(
-                "the test report contains no executed test — cannot evaluate a release"
+                "the test report contains no executed test - cannot evaluate a release"
             )
 
         flaky_ids = set(signals.flakiness.flaky_test_ids) if signals.flakiness else set()
@@ -72,7 +94,7 @@ class ReleaseEvaluator:
             )
 
         score = round(sum(s.score * s.weight for s in signal_scores), 4)
-        if score >= policy.GO_THRESHOLD and not excused:
+        if score >= self._go_threshold and not excused:
             return self._recommend(
                 verdict=Verdict.GO,
                 score=score,
@@ -80,7 +102,7 @@ class ReleaseEvaluator:
                 signals=signal_scores,
                 conditions=conditions,
                 rationale=f"All gates passed; score {score:.2f} meets the "
-                f"GO threshold {policy.GO_THRESHOLD:.2f}.",
+                f"GO threshold {self._go_threshold:.2f}.",
             )
 
         # Excused failures cap the verdict at CONDITIONAL GO (ADR-001).
@@ -119,16 +141,16 @@ class ReleaseEvaluator:
                 gate_id="G2",
                 name="coverage floor",
                 tripped=False,
-                detail="coverage signal absent — gate not evaluated",
+                detail="coverage signal absent - gate not evaluated",
             )
         else:
-            below = signals.coverage.line_rate < policy.COVERAGE_FLOOR
+            below = signals.coverage.line_rate < self._coverage_floor
             g2 = GateResult(
                 gate_id="G2",
                 name="coverage floor",
                 tripped=below,
                 detail=f"line coverage {signals.coverage.line_rate:.0%} vs "
-                f"floor {policy.COVERAGE_FLOOR:.0%}",
+                f"floor {self._coverage_floor:.0%}",
             )
         return [g1, g2]
 
@@ -151,8 +173,8 @@ class ReleaseEvaluator:
         )
 
         if signals.coverage is not None:
-            ramp = (signals.coverage.line_rate - policy.COVERAGE_FLOOR) / (
-                policy.COVERAGE_TARGET - policy.COVERAGE_FLOOR
+            ramp = (signals.coverage.line_rate - self._coverage_floor) / (
+                self._coverage_target - self._coverage_floor
             )
             raw.append(
                 (
@@ -160,7 +182,7 @@ class ReleaseEvaluator:
                     min(1.0, max(0.0, ramp)),
                     policy.WEIGHT_COVERAGE,
                     f"line coverage {signals.coverage.line_rate:.0%} on the "
-                    f"{policy.COVERAGE_FLOOR:.0%}-{policy.COVERAGE_TARGET:.0%} ramp",
+                    f"{self._coverage_floor:.0%}-{self._coverage_target:.0%} ramp",
                 )
             )
 
@@ -169,7 +191,7 @@ class ReleaseEvaluator:
             raw.append(
                 (
                     SignalKind.FLAKINESS,
-                    max(0.0, 1.0 - policy.FLAKY_PENALTY * ratio),
+                    max(0.0, 1.0 - self._flaky_penalty * ratio),
                     policy.WEIGHT_FLAKINESS,
                     f"{len(signals.flakiness.flaky_test_ids)} flaky of "
                     f"{executed} executed tests",
@@ -200,10 +222,10 @@ class ReleaseEvaluator:
             for test_id in excused
         ]
         if signals.coverage is None:
-            conditions.append("coverage signal missing — weights renormalized")
+            conditions.append("coverage signal missing - weights renormalized")
         if signals.flakiness is None:
             conditions.append(
-                "flakiness signal missing — all failures treated as real, "
+                "flakiness signal missing - all failures treated as real, "
                 "weights renormalized"
             )
         return conditions
@@ -211,7 +233,7 @@ class ReleaseEvaluator:
     def _weak_spot_conditions(
         self, signal_scores: list[SignalScore], score: float
     ) -> list[str]:
-        if score >= policy.GO_THRESHOLD:
+        if score >= self._go_threshold:
             return []
         weakest = min(signal_scores, key=lambda s: s.score)
         return [
@@ -236,7 +258,7 @@ class ReleaseEvaluator:
     ) -> tuple[str, GenerationPath]:
         fallback = (
             f"No blocker; score {score:.2f} below GO threshold "
-            f"{policy.GO_THRESHOLD:.2f}. Conditions: "
+            f"{self._go_threshold:.2f}. Conditions: "
             + ("; ".join(conditions) if conditions else "none")
         )
         if self._llm_client is None:
