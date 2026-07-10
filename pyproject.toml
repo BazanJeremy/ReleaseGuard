@@ -16,7 +16,10 @@ dependencies = [
 
 [project.optional-dependencies]
 llm = ["anthropic>=0.40"]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "coverage>=7.6"]
+
+[project.scripts]
+releaseguard = "releaseguard.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -24,3 +27,6 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.coverage.run]
+source = ["src"]
