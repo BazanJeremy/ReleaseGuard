@@ -5,8 +5,9 @@
 
 ## Project State — READ FIRST
 
-- **Status: ✅ S1 delivered (2026-07-10) — next: S2, parsers + scoring engine.**
+- **Status: ✅ S2 delivered (2026-07-10) — next: S3, CLI + dogfood CI gate + senior README.**
 - S1: ADR-001 accepted (hard gates + weighted score), Pydantic v2 models, policy constants module, three canonical scenario fixtures (GO / NO GO / CONDITIONAL), 39 contract tests, zero-key CI.
+- S2: ADR-002 accepted (test identity join — reconstructed pytest node ids, conservative on miss), three parsers (JUnit, Cobertura, FlakySense JSON), evaluator implementing the full gate model, env-gated LLM narration for CONDITIONAL GO only. Suite: 75 tests.
 - Work discipline: **small, session-scoped increments** — one concern per session, plan validated before code, feature branch + PR to `main`.
 
 ## Project Goal
