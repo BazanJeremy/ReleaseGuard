@@ -6,10 +6,10 @@ build/
 dist/
 .venv/
 
-# Tooling
+# Tooling (anchored to root — data/samples/ fixtures must stay trackable)
 .pytest_cache/
-.coverage
-coverage.xml
+/.coverage
+/coverage.xml
 htmlcov/
 reports/
 
