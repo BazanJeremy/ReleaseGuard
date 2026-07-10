@@ -1,0 +1,40 @@
+[
+  {
+    "test_id": "tests/test_export.py::test_csv_export",
+    "detection": {
+      "test_id": "tests/test_export.py::test_csv_export",
+      "score": 0.55,
+      "is_flaky": true,
+      "evidence": [
+        {
+          "test_id": "tests/test_export.py::test_csv_export",
+          "run_id": "ci-run-1041",
+          "status": "failed",
+          "duration_s": 9.812,
+          "started_at": "2026-07-08T14:22:10Z",
+          "execution_index": 6
+        },
+        {
+          "test_id": "tests/test_export.py::test_csv_export",
+          "run_id": "ci-run-1042",
+          "status": "passed",
+          "duration_s": 3.371,
+          "started_at": "2026-07-08T16:05:44Z",
+          "execution_index": 6
+        }
+      ],
+      "method": "rule_based_v1"
+    },
+    "classification": {
+      "test_id": "tests/test_export.py::test_csv_export",
+      "cause": "timing",
+      "confidence": 0.58,
+      "signals": ["duration variance 2.9x median", "intermittent failures across runs"]
+    },
+    "explanation": "The test intermittently exceeds its export timeout under CI load; duration varies far beyond the suite median.",
+    "recommendation": "Replace the fixed export timeout with a polling wait bounded at 15s.",
+    "confidence": 0.58,
+    "generated_by": "system1_fallback",
+    "created_at": "2026-07-08T16:20:00Z"
+  }
+]

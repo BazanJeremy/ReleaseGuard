@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="pytest" errors="0" failures="0" skipped="0" tests="8" time="9.412" timestamp="2026-07-10T09:14:02.123456" hostname="ci-linux-01">
+    <testcase classname="tests.test_auth" name="test_login_happy_path" time="0.812"/>
+    <testcase classname="tests.test_auth" name="test_login_bad_password" time="0.421"/>
+    <testcase classname="tests.test_payment" name="test_refund_idempotency" time="1.204"/>
+    <testcase classname="tests.test_payment" name="test_currency_rounding" time="0.315"/>
+    <testcase classname="tests.test_search" name="test_search_pagination" time="2.108"/>
+    <testcase classname="tests.test_search" name="test_search_empty_query" time="0.207"/>
+    <testcase classname="tests.test_export" name="test_csv_export" time="3.415"/>
+    <testcase classname="tests.test_export" name="test_pdf_export" time="0.930"/>
+  </testsuite>
+</testsuites>

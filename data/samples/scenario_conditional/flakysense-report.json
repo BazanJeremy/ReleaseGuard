@@ -1,0 +1,78 @@
+[
+  {
+    "test_id": "tests/test_search.py::test_search_pagination",
+    "detection": {
+      "test_id": "tests/test_search.py::test_search_pagination",
+      "score": 0.68,
+      "is_flaky": true,
+      "evidence": [
+        {
+          "test_id": "tests/test_search.py::test_search_pagination",
+          "run_id": "ci-run-1038",
+          "status": "failed",
+          "duration_s": 7.104,
+          "started_at": "2026-07-07T11:40:03Z",
+          "execution_index": 4
+        },
+        {
+          "test_id": "tests/test_search.py::test_search_pagination",
+          "run_id": "ci-run-1039",
+          "status": "passed",
+          "duration_s": 2.213,
+          "started_at": "2026-07-07T15:12:51Z",
+          "execution_index": 4
+        }
+      ],
+      "method": "rule_based_v1"
+    },
+    "classification": {
+      "test_id": "tests/test_search.py::test_search_pagination",
+      "cause": "timing",
+      "confidence": 0.62,
+      "signals": ["duration variance 6.1x median", "failures cluster on loaded runners"]
+    },
+    "explanation": "Pagination waits on a fixed 5s timeout; under CI load the results page renders in 6-7s, producing intermittent timeouts unrelated to the code under test.",
+    "recommendation": "Replace the fixed 5s wait with an explicit condition-based wait bounded at 15s.",
+    "confidence": 0.62,
+    "generated_by": "system1_fallback",
+    "created_at": "2026-07-10T08:57:31Z"
+  },
+  {
+    "test_id": "tests/test_cache.py::test_cache_eviction",
+    "detection": {
+      "test_id": "tests/test_cache.py::test_cache_eviction",
+      "score": 0.51,
+      "is_flaky": true,
+      "evidence": [
+        {
+          "test_id": "tests/test_cache.py::test_cache_eviction",
+          "run_id": "ci-run-1036",
+          "status": "failed",
+          "duration_s": 1.602,
+          "started_at": "2026-07-06T09:18:22Z",
+          "execution_index": 7
+        },
+        {
+          "test_id": "tests/test_cache.py::test_cache_eviction",
+          "run_id": "ci-run-1037",
+          "status": "passed",
+          "duration_s": 1.588,
+          "started_at": "2026-07-06T13:44:09Z",
+          "execution_index": 2
+        }
+      ],
+      "method": "rule_based_v1"
+    },
+    "classification": {
+      "test_id": "tests/test_cache.py::test_cache_eviction",
+      "cause": "ordering",
+      "confidence": 0.54,
+      "signals": ["fails only when executed late in the suite", "shared cache state suspected"]
+    },
+    "explanation": "The eviction assertion depends on cache population left behind by earlier tests; when execution order shifts, the preconditions silently change.",
+    "recommendation": "Isolate the test with a dedicated cache instance reset in a fixture.",
+    "confidence": 0.54,
+    "generated_by": "system1_fallback",
+    "created_at": "2026-07-10T08:57:31Z"
+  }
+]
