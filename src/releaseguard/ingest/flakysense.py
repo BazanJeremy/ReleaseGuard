@@ -1,4 +1,4 @@
-"""FlakySense JSON parser — known-flaky node ids from a P4 report.
+"""FlakySense JSON parser — known-flaky node ids from a FlakySense report.
 
 Reads the ``flakysense --json`` output: an array of per-test reports, each
 carrying a ``detection.is_flaky`` verdict. Only flagged tests matter here;

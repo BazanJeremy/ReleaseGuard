@@ -1,7 +1,7 @@
 # Bug Evidence Log
 
 Bugs caught by this project's own tests and demo runs, documented before
-being fixed (portfolio principle #4). Each entry: what was caught, why it
+being fixed (series-wide principle #4). Each entry: what was caught, why it
 mattered.
 
 ## #1 — Fixture `coverage.xml` files silently excluded by `.gitignore` (2026-07-10, S1)

@@ -14,7 +14,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # Mirrors the FlakySense convention ("system1_fallback" / "system2_llm") so
-# both tools read the same way in a portfolio review; here System 1 is the
+# both tools read the same way side by side; here System 1 is the
 # primary path, not a fallback.
 GenerationPath = Literal["system1", "system2_llm"]
 

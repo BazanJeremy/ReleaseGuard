@@ -52,7 +52,7 @@ CLI exit codes (S3): `0` GO · `1` CONDITIONAL GO · `2` NO GO · `3` error.
 
 1. **Pure weighted average** — simple, but averaging compensates blockers; a release gate must not trade a failing test against coverage points. Rejected.
 2. **Hard gates + weighted score** — blockers veto, score grades the rest; auditable per-signal breakdown. **Accepted.**
-3. **ML-learned weights** — no training data at portfolio scale, opaque to a release manager, unmaintainable solo. Rejected.
+3. **ML-learned weights** — no training data at solo-project scale, opaque to a release manager, unmaintainable solo. Rejected.
 
 ## Consequences
 

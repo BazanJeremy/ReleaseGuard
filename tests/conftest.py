@@ -1,6 +1,6 @@
-"""Shared fixtures. The API-key scrub is suite-wide and autouse (P4 ADR-004
-pattern): no test may accidentally exercise a live LLM — System 2 behavior
-is tested through injected fakes only."""
+"""Shared fixtures. The API-key scrub is suite-wide and autouse (FlakySense
+ADR-004 pattern): no test may accidentally exercise a live LLM — System 2
+behavior is tested through injected fakes only."""
 
 from pathlib import Path
 
