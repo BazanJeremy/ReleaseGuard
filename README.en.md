@@ -9,13 +9,15 @@
 
 > 🇫🇷 [Version française](README.md)
 
-**Status: ✅ Complete.** Portfolio project P5 of a 6-project AI Test Engineering portfolio. 89 tests, zero API keys required, CI-gated by itself (see [Dogfooding](#dogfooding-this-repo-gates-itself)).
+**Status: ✅ Complete.** 89 tests, zero API keys required, CI-gated by itself (see [Dogfooding](#dogfooding-this-repo-gates-itself)).
 
 ## The problem
 
 Release managers aggregate quality signals by hand: a test report here, a coverage dashboard there, tribal knowledge about which failures are "the usual flaky ones". The synthesis lives in someone's head — unauditable, unrepeatable, and lost when that person is on leave.
 
 ReleaseGuard turns that synthesis into a deterministic, explainable gate over standard CI artifacts: JUnit XML (tests), Cobertura XML (coverage), and a [FlakySense](https://github.com/BazanJeremy/flakysense) JSON report (flakiness).
+
+Its differentiator vs [FlakySense](https://github.com/BazanJeremy/flakysense) — sequential multi-agent orchestration on one stream — is **heterogeneous signal fusion and decision-making under gates**. The two interoperate without runtime coupling: a FlakySense report is just one input signal among others. And not to be confused with [anomaly-sentinel](https://github.com/BazanJeremy/anomaly-sentinel), where the AI is the **system under test** (validating an LLM classifier as a critical component) — here the **delivery process** is the object: ReleaseGuard locks the decision to ship any build, and the AI decides nothing in it.
 
 ```
 $ releaseguard --junit junit.xml --coverage coverage.xml --flaky flakysense-report.json
@@ -104,7 +106,7 @@ Optional System 2 narration: `pip install -e .[llm]` and set `ANTHROPIC_API_KEY`
 
 ## Dogfooding: this repo gates itself
 
-There is deliberately no Docker here (P4 already demonstrates container packaging). ReleaseGuard's deployment story is its own CI: every push runs the test suite with JUnit and coverage output, then runs **releaseguard on its own artifacts** and publishes the verdict in the job summary. The step passes on GO or CONDITIONAL GO and fails the pipeline on NO GO:
+There is deliberately no Docker here ([FlakySense](https://github.com/BazanJeremy/flakysense) already demonstrates container packaging). ReleaseGuard's deployment story is its own CI: every push runs the test suite with JUnit and coverage output, then runs **releaseguard on its own artifacts** and publishes the verdict in the job summary. The step passes on GO or CONDITIONAL GO and fails the pipeline on NO GO:
 
 ```bash
 releaseguard --junit reports/junit.xml --coverage coverage.xml || test $? -le 1
@@ -137,12 +139,6 @@ docs/adr/          # architecture decision records
 docs/bug-evidence.md
 tests/             # 89 tests: contracts, parsers, gate rules, CLI, System 2
 ```
-
-## Portfolio context
-
-P5 of a 6-project AI Test Engineering portfolio. Its differentiator vs [FlakySense (P4)](https://github.com/BazanJeremy/flakysense) — sequential multi-agent orchestration on one stream — is **heterogeneous signal fusion and decision-making under gates**. The two interoperate without runtime coupling: a FlakySense report is just one input signal among others.
-
-Not to be confused with [anomaly-sentinel](https://github.com/BazanJeremy/anomaly-sentinel), where the AI is the **system under test** (validating an LLM classifier as a critical component). Here the **delivery process** is the object: ReleaseGuard locks the decision to ship any build, and the AI decides nothing in it.
 
 ## Author
 

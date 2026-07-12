@@ -22,6 +22,13 @@ ReleaseGuard transforme cette synthèse en **quality gate déterministe et expli
 posée sur des artefacts CI standard : JUnit XML (tests), Cobertura XML (couverture),
 rapport [FlakySense](https://github.com/BazanJeremy/flakysense) JSON (flakiness).
 
+À ne pas confondre avec [anomaly-sentinel](https://github.com/BazanJeremy/anomaly-sentinel) :
+là-bas, l'IA est le **système sous test** — on valide un classifieur LLM comme composant
+critique. Ici, le **processus de livraison** est l'objet : ReleaseGuard verrouille la
+décision de livrer n'importe quel build, et l'IA n'y décide rien.
+[FlakySense](https://github.com/BazanJeremy/flakysense) fournit l'un des trois signaux
+d'entrée — aucun couplage à l'exécution, un rapport JSON suffit.
+
 ## L'approche : verrous durs d'abord, score ensuite
 
 **Jamais de moyenne pure.** Moyenner est l'anti-pattern classique du release gate :
@@ -136,19 +143,10 @@ Des choix assumés, documentés dans les ADRs :
   changer les poids est une décision de gouvernance qui passe par un ADR remplaçant,
   pas par un flag de pipeline ([ADR-003](docs/adr/ADR-003-cli-contract.md)).
 - **Pas de conteneurisation.** L'histoire de déploiement de ce dépôt est son propre
-  verrou CI (dogfood) ; le packaging conteneur est démontré ailleurs dans le portfolio.
+  verrou CI (dogfood) ; le packaging conteneur est démontré par
+  [FlakySense](https://github.com/BazanJeremy/flakysense).
 - **Narration IA conditionnelle à une clé.** Sans `ANTHROPIC_API_KEY`, le rationale
   System 1 déterministe est rendu — le verdict est identique dans les deux cas.
-
-## Positionnement dans le portfolio
-
-P5 d'un portfolio de 6 projets AI Test Engineering. À ne pas confondre avec
-[anomaly-sentinel](https://github.com/BazanJeremy/anomaly-sentinel) : là-bas, l'IA est
-le **système sous test** — on valide un classifieur LLM comme composant critique. Ici,
-le **processus de livraison** est l'objet : ReleaseGuard verrouille la décision de
-livrer n'importe quel build, et l'IA n'y décide rien.
-[FlakySense](https://github.com/BazanJeremy/flakysense) (P4) fournit l'un des trois
-signaux d'entrée — aucun couplage à l'exécution, un rapport JSON suffit.
 
 ## Auteur
 
