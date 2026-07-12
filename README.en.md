@@ -43,9 +43,9 @@ Rationale (system1):
 
 Exit code `1` — a CI pipeline can gate on it directly (`0` GO, `1` CONDITIONAL GO, `2` NO GO, `3` error).
 
-## The gate model (ADR-001)
+## How it works
 
-**Hard gates first, weighted score second — never a pure average.** Averaging is the classic release-gate anti-pattern: excellent coverage can arithmetically mask a failing smoke test. A blocker must not be compensable.
+**Hard gates first, weighted score second — never a pure average.** Averaging is the classic release-gate anti-pattern: excellent coverage can arithmetically mask a failing smoke test. A blocker must not be compensable ([ADR-001](docs/adr/ADR-001-release-gate-model.md)).
 
 | Layer | Rule |
 |---|---|
@@ -86,13 +86,23 @@ flowchart LR
 - Signals are optional by design (except tests): a missing coverage or flakiness report renormalizes the remaining weights and lands in the conditions list. Zero *executed* tests is an error, never a verdict — no evidence, no opinion.
 - Every ADR-001 number lives in [`policy.py`](src/releaseguard/policy.py); nothing else may hard-code a threshold. Thresholds are per-run tunable via CLI flags; the *weights* are deliberately not — changing the weighting is a governance decision that goes through a superseding ADR, not a pipeline flag ([ADR-003](docs/adr/ADR-003-cli-contract.md)).
 
+## Dogfooding: this repo gates itself
+
+There is deliberately no Docker here ([FlakySense](https://github.com/BazanJeremy/flakysense) already demonstrates container packaging). ReleaseGuard's deployment story is its own CI: every push runs the test suite with JUnit and coverage output, then runs **releaseguard on its own artifacts** and publishes the verdict in the job summary. The step passes on GO or CONDITIONAL GO and fails the pipeline on NO GO:
+
+```bash
+releaseguard --junit reports/junit.xml --coverage coverage.xml || test $? -le 1
+```
+
+See [.github/workflows/ci.yml](.github/workflows/ci.yml). The tool is not a demo beside the project — it is the project's own release gate.
+
 ## Quickstart
 
-```powershell
+```bash
 git clone https://github.com/BazanJeremy/ReleaseGuard.git
 cd ReleaseGuard
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+source .venv/bin/activate       # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 pip install -e .[dev]
 python -m pytest                # 89 tests, no API key needed
 
@@ -104,17 +114,7 @@ releaseguard --junit data/samples/scenario_conditional/junit.xml --coverage data
 
 Optional System 2 narration: `pip install -e .[llm]` and set `ANTHROPIC_API_KEY`. Everything above works identically without it.
 
-## Dogfooding: this repo gates itself
-
-There is deliberately no Docker here ([FlakySense](https://github.com/BazanJeremy/flakysense) already demonstrates container packaging). ReleaseGuard's deployment story is its own CI: every push runs the test suite with JUnit and coverage output, then runs **releaseguard on its own artifacts** and publishes the verdict in the job summary. The step passes on GO or CONDITIONAL GO and fails the pipeline on NO GO:
-
-```bash
-releaseguard --junit reports/junit.xml --coverage coverage.xml || test $? -le 1
-```
-
-See [.github/workflows/ci.yml](.github/workflows/ci.yml). The tool is not a demo beside the project — it is the project's own release gate.
-
-## Architecture decisions
+## Design decisions
 
 | ADR | Decision |
 |---|---|
@@ -123,6 +123,15 @@ See [.github/workflows/ci.yml](.github/workflows/ci.yml). The tool is not a demo
 | [ADR-003](docs/adr/ADR-003-cli-contract.md) | CLI contract: verdict-mapped exit codes, ASCII output, threshold flags only |
 
 Bugs caught by the project's own tests and demo runs are documented in [docs/bug-evidence.md](docs/bug-evidence.md) — including the first CI run catching untracked fixtures and the first dogfood run catching an output-encoding violation.
+
+## Known limitations
+
+Deliberate cuts, documented in the ADRs:
+
+- **Three parsers only** (JUnit, Cobertura, FlakySense). Any new signal type is an extension point, not v1 scope.
+- **Weights are not CLI-tunable.** Thresholds are; changing the weights is a governance decision that goes through a superseding ADR, not a pipeline flag ([ADR-003](docs/adr/ADR-003-cli-contract.md)).
+- **No containerization.** This repo's deployment story is its own CI gate (dogfooding); container packaging is demonstrated by [FlakySense](https://github.com/BazanJeremy/flakysense).
+- **AI narration requires a key.** Without `ANTHROPIC_API_KEY`, the deterministic System 1 rationale is rendered — the verdict is identical either way.
 
 ## Project structure
 

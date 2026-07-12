@@ -10,7 +10,7 @@ en un verdict GO / NO GO argumenté, prêt à bloquer un pipeline.**
 
 > 🇬🇧 [English version](README.en.md)
 
-## Le problème QA
+## Le problème
 
 Des tests verts ne suffisent pas à autoriser une mise en production. La décision de
 release agrège en réalité plusieurs signaux : le rapport de tests, le tableau de bord
@@ -29,7 +29,7 @@ décision de livrer n'importe quel build, et l'IA n'y décide rien.
 [FlakySense](https://github.com/BazanJeremy/flakysense) fournit l'un des trois signaux
 d'entrée — aucun couplage à l'exécution, un rapport JSON suffit.
 
-## L'approche : verrous durs d'abord, score ensuite
+## Comment ça marche
 
 **Jamais de moyenne pure.** Moyenner est l'anti-pattern classique du release gate :
 une excellente couverture peut masquer arithmétiquement un smoke test qui échoue. Un
@@ -58,6 +58,30 @@ Trois engagements structurent le modèle :
   `ANTHROPIC_API_KEY`) rédige le rationale des `CONDITIONAL GO` — rien d'autre. Elle ne
   peut modifier ni le verdict, ni le score, ni les conditions : c'est verrouillé par des
   tests. Sans clé API, tout fonctionne à l'identique en mode déterministe.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph artifacts [Artefacts CI]
+        J[junit.xml]
+        C[coverage.xml]
+        F[flakysense-report.json]
+    end
+    subgraph ingest [releaseguard.ingest]
+        PJ[Parseur JUnit<br/>reconstruction des node ids]
+        PC[Parseur Cobertura]
+        PF[Parseur FlakySense]
+    end
+    J --> PJ --> S[ReleaseSignals]
+    C --> PC --> S
+    F --> PF --> S
+    S --> E{ReleaseEvaluator}
+    E -->|verrou declenche| NG[NO GO]
+    E -->|score >= 0.80, rien d'excuse| GO[GO]
+    E -->|sinon| CG[CONDITIONAL GO]
+    CG -.->|narration optionnelle| LLM[LLM System 2]
+```
 
 ## Un verdict rendu
 
@@ -89,7 +113,22 @@ Code de sortie `1` — un pipeline verrouille directement dessus : `0` GO,
 `1` CONDITIONAL GO, `2` NO GO, `3` erreur ([ADR-003](docs/adr/ADR-003-cli-contract.md)).
 Sortie JSON complète disponible via `--json`.
 
-## Démo locale
+## Intégration CI
+
+ReleaseGuard s'insère dans n'importe quelle CI par ses codes de sortie — GitHub
+Actions, GitLab CI, Azure DevOps :
+
+```bash
+# bloque le pipeline sur NO GO, laisse passer GO et CONDITIONAL GO
+releaseguard --junit reports/junit.xml --coverage coverage.xml || test $? -le 1
+```
+
+Ce dépôt le prouve sur lui-même : à chaque push, la CI exécute la suite de tests puis
+**ReleaseGuard évalue les artefacts de son propre build** et publie le verdict dans le
+job summary ([.github/workflows/ci.yml](.github/workflows/ci.yml)). L'outil n'est pas
+une démo posée à côté du projet — il est le verrou de release du projet.
+
+## Démarrage rapide
 
 ```bash
 git clone https://github.com/BazanJeremy/ReleaseGuard.git
@@ -107,22 +146,7 @@ releaseguard --junit data/samples/scenario_conditional/junit.xml --coverage data
 Narration System 2 optionnelle : `pip install -e .[llm]` et définir
 `ANTHROPIC_API_KEY`. Tout ce qui précède fonctionne à l'identique sans.
 
-## Intégration CI
-
-ReleaseGuard s'insère dans n'importe quelle CI par ses codes de sortie — GitHub
-Actions, GitLab CI, Azure DevOps :
-
-```bash
-# bloque le pipeline sur NO GO, laisse passer GO et CONDITIONAL GO
-releaseguard --junit reports/junit.xml --coverage coverage.xml || test $? -le 1
-```
-
-Ce dépôt le prouve sur lui-même : à chaque push, la CI exécute la suite de tests puis
-**ReleaseGuard évalue les artefacts de son propre build** et publie le verdict dans le
-job summary ([.github/workflows/ci.yml](.github/workflows/ci.yml)). L'outil n'est pas
-une démo posée à côté du projet — il est le verrou de release du projet.
-
-## Stack technique
+## Décisions de conception
 
 | Couche | Choix |
 |---|---|
@@ -133,7 +157,7 @@ une démo posée à côté du projet — il est le verrou de release du projet.
 | CI | GitHub Actions — verrou dogfood bloquant |
 | Décisions d'architecture | 3 ADRs ([docs/adr/](docs/adr/)) + [journal de bugs](docs/bug-evidence.md) |
 
-## Limites
+## Limites connues
 
 Des choix assumés, documentés dans les ADRs :
 
