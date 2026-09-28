@@ -28,7 +28,7 @@ _NARRATOR_SYSTEM_PROMPT = (
     "You are the narrator of a release-readiness gate. You receive the "
     "deterministic verdict of the gate as JSON: verdict, weighted score, "
     "gate results, per-signal scores, and a list of conditions. Write a "
-    "short rationale (3-5 sentences) for a release manager: why the release "
+    "short rationale paragraph for a release manager: why the release "
     "is a conditional go, which signal drags it down, and what the listed "
     "conditions mean in practice. Never contradict the verdict or invent "
     "signals. Plain text, no markdown."
