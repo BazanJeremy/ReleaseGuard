@@ -103,3 +103,37 @@ class TestPolicyOverrides:
             samples, "scenario_conditional", "--go-threshold", "0.1", capsys=capsys
         )
         assert code == 1
+
+
+class TestJUnitDialectFlag:
+    """ADR-004: --junit-dialect is a declaration about the artifact, not a
+    threshold - it cannot move the gate's definition of "release ready"."""
+
+    def dialect_cli(self, samples, *extra: str) -> int:
+        base = samples / "dialect_playwright"
+        return main(
+            [
+                "--junit", str(base / "junit.xml"),
+                "--flaky", str(base / "flakysense-report.json"),
+                *extra,
+            ]
+        )
+
+    def test_default_is_pytest_and_blocks(self, samples, capsys):
+        assert self.dialect_cli(samples) == 2
+        assert "[BLOCK] G1" in capsys.readouterr().out
+
+    def test_path_dialect_ships_conditional(self, samples, capsys):
+        assert self.dialect_cli(samples, "--junit-dialect", "path") == 1
+        assert "excused flaky failure:" in capsys.readouterr().out
+
+    def test_invalid_dialect_exits_3_not_2(self, samples, capsys):
+        """A typo must never read as NO GO (ADR-003's exit-code rule)."""
+        with pytest.raises(SystemExit) as exit_info:
+            self.dialect_cli(samples, "--junit-dialect", "pytest-ish")
+        assert exit_info.value.code == 3
+
+    def test_explicit_pytest_matches_the_default(self, samples):
+        assert self.dialect_cli(samples, "--junit-dialect", "pytest") == self.dialect_cli(
+            samples
+        )

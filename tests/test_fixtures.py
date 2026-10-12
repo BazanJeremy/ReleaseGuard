@@ -91,3 +91,56 @@ class TestScenarioDesignInvariants:
 
         root = ET.parse(SAMPLES / "scenario_conditional" / "coverage.xml").getroot()
         assert policy.COVERAGE_FLOOR < float(root.get("line-rate")) < policy.COVERAGE_TARGET
+
+
+class TestDialectFixtureIntegrity:
+    """`dialect_playwright` carries real Playwright bytes (ADR-004, bug
+    evidence #4). These properties are what make it evidence rather than
+    decoration: lose any of them and the fixture stops reproducing the defect
+    while the tests around it stay green.
+
+    It deliberately ships no `coverage.xml` — it exists to exercise the
+    identity join, and the coverage signal is optional (ADR-001).
+    """
+
+    DIALECT = "dialect_playwright"
+
+    def cases(self) -> list[ET.Element]:
+        root = ET.parse(SAMPLES / self.DIALECT / "junit.xml").getroot()
+        return list(root.iter("testcase"))
+
+    def test_artifacts_present(self):
+        for artifact in ["junit.xml", "flakysense-report.json"]:
+            assert (SAMPLES / self.DIALECT / artifact).is_file()
+
+    def test_no_file_attribute(self):
+        """FlakySense prefers a `file` attribute over `classname`; Playwright
+        emits none, which is why the classname carries the path at all."""
+        assert [c for c in self.cases() if c.get("file")] == []
+
+    def test_classnames_are_paths_not_dotted_modules(self):
+        for case in self.cases():
+            classname = case.get("classname")
+            assert classname
+            assert "/" in classname or "\\" in classname, classname
+            # No CapWords segment: the pytest heuristic finds no class chain
+            # and consumes the whole thing as a module path.
+            assert not any(p[:1].isupper() for p in classname.split(".")), classname
+
+    def test_single_failure_is_listed_flaky_under_the_path_identity(self):
+        """The scenario's reason to exist: the only failure IS known-flaky, so
+        a working join must excuse it and a broken one must block."""
+        failing = [
+            c
+            for c in self.cases()
+            if c.find("failure") is not None or c.find("error") is not None
+        ]
+        assert len(failing) == 1
+        identity = f"{failing[0].get('classname')}::{failing[0].get('name')}"
+        report = json.loads(
+            (SAMPLES / self.DIALECT / "flakysense-report.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        flaky = {e["test_id"] for e in report if e["detection"]["is_flaky"]}
+        assert identity in flaky

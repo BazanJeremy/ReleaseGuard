@@ -1,9 +1,10 @@
-"""Parser tests — one dialect each, plus the ADR-002 node-id reconstruction."""
+"""Parser tests — one dialect each, plus the ADR-002 node-id reconstruction
+and the ADR-004 declared JUnit dialect."""
 
 import pytest
 
 from releaseguard.ingest import parse_cobertura, parse_flakysense, parse_junit
-from releaseguard.ingest.junit import node_id
+from releaseguard.ingest.junit import case_identity, node_id
 
 
 class TestNodeIdReconstruction:
@@ -90,6 +91,74 @@ class TestParseJunit:
         report.write_text("<html/>")
         with pytest.raises(ValueError, match="expected <testsuites>"):
             parse_junit(report)
+
+
+class TestJUnitDialect:
+    """ADR-004: the dialect is declared, never guessed. The `path` dialect
+    takes a path-shaped classname verbatim; `pytest` stays the default."""
+
+    def test_default_dialect_is_pytest_reconstruction(self):
+        assert case_identity("tests.test_api", "test_ok") == node_id(
+            "tests.test_api", "test_ok"
+        )
+
+    @pytest.mark.parametrize(
+        ("classname", "name", "expected"),
+        [
+            (
+                "invariants/zero-js.spec.ts",
+                "[gate] no js",
+                "invariants/zero-js.spec.ts::[gate] no js",
+            ),
+            # Windows-emitted separators are the artifact's own bytes: nothing
+            # is normalized, because the flakiness report is not ours to rewrite.
+            (
+                "invariants\\zero-js.spec.ts",
+                "[gate] no js",
+                "invariants\\zero-js.spec.ts::[gate] no js",
+            ),
+            # Dots are not separators in this dialect; `.spec.ts` survives.
+            ("a11y/axe.spec.ts", "home", "a11y/axe.spec.ts::home"),
+            # No classname leaves nothing to prefix - same fallback as pytest.
+            ("", "orphan", "orphan"),
+        ],
+    )
+    def test_path_dialect_joins_verbatim(self, classname, name, expected):
+        assert case_identity(classname, name, dialect="path") == expected
+
+    def test_pytest_dialect_mangles_a_path_classname(self):
+        """Why the dialect exists (bug evidence #4): a path-shaped classname
+        run through the pytest heuristic yields an id that can never match."""
+        assert (
+            case_identity("invariants/zero-js.spec.ts", "[gate] no js")
+            == "invariants/zero-js/spec/ts.py::[gate] no js"
+        )
+
+    def test_unknown_dialect_rejected_by_identity(self):
+        with pytest.raises(ValueError, match="unknown JUnit dialect"):
+            case_identity("a.b", "test_x", dialect="maven")
+
+    def test_unknown_dialect_rejected_before_reading_the_report(self, tmp_path):
+        """Validated up front: an empty report must not mask a bad dialect."""
+        report = tmp_path / "junit.xml"
+        report.write_text("<testsuite></testsuite>")
+        with pytest.raises(ValueError, match="unknown JUnit dialect"):
+            parse_junit(report, dialect="maven")
+
+    def test_parse_junit_path_dialect_on_the_real_fixture(self, samples):
+        signal = parse_junit(
+            samples / "dialect_playwright" / "junit.xml", dialect="path"
+        )
+        assert (signal.total, signal.failed) == (6, 1)
+        assert signal.failed_test_ids == [
+            "invariants\\zero-js.spec.ts::[invariants-gate] Invariant 0-JS "
+            "› aucun fichier JavaScript dans dist/"
+        ]
+
+    def test_parse_junit_default_dialect_breaks_the_real_fixture(self, samples):
+        """The same bytes under the default dialect: the join key is mangled."""
+        signal = parse_junit(samples / "dialect_playwright" / "junit.xml")
+        assert signal.failed_test_ids[0].startswith("invariants\\zero-js/spec/ts.py::")
 
 
 class TestParseCobertura:
