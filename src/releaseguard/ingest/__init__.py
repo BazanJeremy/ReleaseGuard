@@ -6,6 +6,20 @@ and knows nothing about gates or scoring. New signal types plug in here.
 
 from releaseguard.ingest.cobertura import parse_cobertura
 from releaseguard.ingest.flakysense import parse_flakysense
-from releaseguard.ingest.junit import parse_junit
+from releaseguard.ingest.junit import (
+    DEFAULT_DIALECT,
+    DIALECTS,
+    JUnitDialect,
+    case_identity,
+    parse_junit,
+)
 
-__all__ = ["parse_cobertura", "parse_flakysense", "parse_junit"]
+__all__ = [
+    "DEFAULT_DIALECT",
+    "DIALECTS",
+    "JUnitDialect",
+    "case_identity",
+    "parse_cobertura",
+    "parse_flakysense",
+    "parse_junit",
+]

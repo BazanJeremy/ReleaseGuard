@@ -9,7 +9,7 @@
 
 > 🇫🇷 [Version française](README.md)
 
-**Status: ✅ Complete.** 89 tests, zero API keys required, CI-gated by itself (see [Dogfooding](#dogfooding-this-repo-gates-itself)).
+**Status: ✅ Complete.** 110 tests, zero API keys required, CI-gated by itself (see [Dogfooding](#dogfooding-this-repo-gates-itself)).
 
 ## The problem
 
@@ -55,7 +55,7 @@ Exit code `1` — a CI pipeline can gate on it directly (`0` GO, `1` CONDITIONAL
 
 Three design commitments carry the model:
 
-1. **The cross-signal rule.** A failing test that FlakySense lists as flaky does not trip G1 — the failure is *excused by name* in the conditions and caps the verdict at `CONDITIONAL GO`. No single parser can produce this decision; it exists only in the fusion. The join uses full pytest node ids reconstructed from JUnit attributes ([ADR-002](docs/adr/ADR-002-test-identity-join.md)); a join miss can only make the verdict stricter, never excuse a failure it should not — and the bare-name alternative was rejected precisely because a name collision fails toward false GO (verified counterfactual: [bug evidence #2](docs/bug-evidence.md)).
+1. **The cross-signal rule.** A failing test that FlakySense lists as flaky does not trip G1 — the failure is *excused by name* in the conditions and caps the verdict at `CONDITIONAL GO`. No single parser can produce this decision; it exists only in the fusion. The join uses a full, file-prefixed identity built from JUnit attributes in a **declared dialect** ([ADR-004](docs/adr/ADR-004-junit-dialect-declared.md), superseding ADR-002): `pytest` reconstructs a node id from a dotted classname, `path` takes an already-path-shaped classname verbatim — pass `--junit-dialect path` for Playwright, Jest or Vitest reports. A join miss can only make the verdict stricter, never excuse a failure it should not; the bare-name alternative was rejected precisely because a name collision fails toward false GO (verified counterfactual: [bug evidence #2](docs/bug-evidence.md)), and guessing the dialect was rejected because a release gate should not infer what it can be told (measured evidence: [bug evidence #4](docs/bug-evidence.md)).
 2. **`NO GO` requires an identifiable blocker.** The score alone can never veto: a low score without a named blocker is a conditional ship with listed risks, not a gut-feeling block.
 3. **Hard verdicts never depend on an LLM.** System 2 (optional, env-gated) narrates `CONDITIONAL GO` rationales only; it can never alter the verdict, the score, or the conditions (pinned by tests). No `ANTHROPIC_API_KEY`, no problem: System 1 covers everything deterministically.
 
@@ -104,12 +104,17 @@ cd ReleaseGuard
 python -m venv .venv
 source .venv/bin/activate       # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 pip install -e .[dev]
-python -m pytest                # 89 tests, no API key needed
+python -m pytest                # 110 tests, no API key needed
 
 # try the three canonical scenarios (expected exits: 0, 2, 1)
 releaseguard --junit data/samples/scenario_go/junit.xml --coverage data/samples/scenario_go/coverage.xml --flaky data/samples/scenario_go/flakysense-report.json
 releaseguard --junit data/samples/scenario_no_go/junit.xml --coverage data/samples/scenario_no_go/coverage.xml --flaky data/samples/scenario_no_go/flakysense-report.json
 releaseguard --junit data/samples/scenario_conditional/junit.xml --coverage data/samples/scenario_conditional/coverage.xml --flaky data/samples/scenario_conditional/flakysense-report.json
+
+# a JS-runner report: the same bytes block without the dialect (exit 2) and
+# ship conditionally with it (exit 1) - ADR-004
+releaseguard --junit data/samples/dialect_playwright/junit.xml --flaky data/samples/dialect_playwright/flakysense-report.json
+releaseguard --junit data/samples/dialect_playwright/junit.xml --flaky data/samples/dialect_playwright/flakysense-report.json --junit-dialect path
 ```
 
 Optional System 2 narration: `pip install -e .[llm]` and set `ANTHROPIC_API_KEY`. Everything above works identically without it.
@@ -119,16 +124,18 @@ Optional System 2 narration: `pip install -e .[llm]` and set `ANTHROPIC_API_KEY`
 | ADR | Decision |
 |---|---|
 | [ADR-001](docs/adr/ADR-001-release-gate-model.md) | Release gate model: hard gates + weighted score, no pure averaging |
-| [ADR-002](docs/adr/ADR-002-test-identity-join.md) | Test identity join: reconstructed pytest node ids, conservative on miss |
+| [ADR-002](docs/adr/ADR-002-test-identity-join.md) | Test identity join: reconstructed node ids, conservative on miss — **superseded by ADR-004** |
 | [ADR-003](docs/adr/ADR-003-cli-contract.md) | CLI contract: verdict-mapped exit codes, ASCII output, threshold flags only |
+| [ADR-004](docs/adr/ADR-004-junit-dialect-declared.md) | Test identity join: JUnit dialect declared, not guessed; nothing normalized |
 
-Bugs caught by the project's own tests and demo runs are documented in [docs/bug-evidence.md](docs/bug-evidence.md) — including the first CI run catching untracked fixtures and the first dogfood run catching an output-encoding violation.
+Bugs caught by the project's own tests and runs are documented in [docs/bug-evidence.md](docs/bug-evidence.md) — including the first CI run catching untracked fixtures, the first dogfood run catching an output-encoding violation, and a measurement showing the identity join was dead on every test of a real Playwright report.
 
 ## Known limitations
 
 Deliberate cuts, documented in the ADRs:
 
 - **Three parsers only** (JUnit, Cobertura, FlakySense). Any new signal type is an extension point, not v1 scope.
+- **The JUnit dialect is declared, not detected.** A JS-runner report needs `--junit-dialect path`; forgetting it is safe but strict, and nothing is normalized across dialects ([ADR-004](docs/adr/ADR-004-junit-dialect-declared.md)).
 - **Weights are not CLI-tunable.** Thresholds are; changing the weights is a governance decision that goes through a superseding ADR, not a pipeline flag ([ADR-003](docs/adr/ADR-003-cli-contract.md)).
 - **No containerization.** This repo's deployment story is its own CI gate (dogfooding); container packaging is demonstrated by [FlakySense](https://github.com/BazanJeremy/flakysense).
 - **AI narration requires a key.** Without `ANTHROPIC_API_KEY`, the deterministic System 1 rationale is rendered — the verdict is identical either way.
@@ -144,9 +151,10 @@ src/releaseguard/
   llm.py           # env-gated LLM client (Protocol + Anthropic reference impl)
   cli.py           # argparse CLI, verdict-mapped exit codes
 data/samples/      # three canonical scenarios (GO / NO GO / CONDITIONAL)
+                   # + dialect_playwright: real JS-runner bytes (ADR-004)
 docs/adr/          # architecture decision records
 docs/bug-evidence.md
-tests/             # 89 tests: contracts, parsers, gate rules, CLI, System 2
+tests/             # 110 tests: contracts, parsers, gate rules, CLI, System 2
 ```
 
 ## Related projects

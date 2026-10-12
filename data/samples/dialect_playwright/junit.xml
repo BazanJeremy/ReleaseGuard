@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites id="" name="" tests="6" failures="1" skipped="0" errors="0" time="0.412">
+  <testsuite name="invariants\zero-external.spec.ts" timestamp="2026-10-12T14:25:23.181Z" hostname="invariants-gate" tests="3" failures="0" skipped="0" errors="0" time="1.92">
+    <testcase name="[invariants-gate] Invariant 0 requête externe › aucun attribut de CHARGEMENT ne pointe une origine externe" classname="invariants\zero-external.spec.ts" time="0.028" />
+    <testcase name="[invariants-gate] Invariant 0 requête externe › / — toutes les requêtes restent sur l'origine" classname="invariants\zero-external.spec.ts" time="0.612" />
+    <testcase name="[invariants-gate] Invariant 0 requête externe › /en/ — toutes les requêtes restent sur l'origine" classname="invariants\zero-external.spec.ts" time="0.516" />
+  </testsuite>
+  <testsuite name="invariants\zero-js.spec.ts" timestamp="2026-10-12T14:25:23.181Z" hostname="invariants-gate" tests="3" failures="1" skipped="0" errors="0" time="0.079">
+    <testcase name="[invariants-gate] Invariant 0-JS › aucun fichier JavaScript dans dist/" classname="invariants\zero-js.spec.ts" time="0.014">
+      <failure message="Error: expect(received).toBe(expected) // intermittent">constructed failure: this fixture exists to exercise the join</failure>
+    </testcase>
+    <testcase name="[invariants-gate] Invariant 0-JS › aucune balise &lt;script&gt; dans les pages construites" classname="invariants\zero-js.spec.ts" time="0.024" />
+    <testcase name="[invariants-gate] Invariant 0-JS › aucun gestionnaire d'événement en attribut inline" classname="invariants\zero-js.spec.ts" time="0.029" />
+  </testsuite>
+</testsuites>

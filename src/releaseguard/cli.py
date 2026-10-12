@@ -15,7 +15,13 @@ import sys
 
 from releaseguard import __version__, policy
 from releaseguard.evaluator import ReleaseEvaluator
-from releaseguard.ingest import parse_cobertura, parse_flakysense, parse_junit
+from releaseguard.ingest import (
+    DEFAULT_DIALECT,
+    DIALECTS,
+    parse_cobertura,
+    parse_flakysense,
+    parse_junit,
+)
 from releaseguard.llm import client_from_env
 from releaseguard.models import ReleaseRecommendation, ReleaseSignals, Verdict
 
@@ -52,6 +58,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--flaky", metavar="PATH", help="FlakySense JSON report (optional)"
+    )
+    parser.add_argument(
+        "--junit-dialect",
+        choices=DIALECTS,
+        default=DEFAULT_DIALECT,
+        metavar="NAME",
+        help="how JUnit classname carries test identity (ADR-004): "
+        f"'pytest' dotted module path (default), 'path' already a file path "
+        f"as emitted by JS runners. Choices: {', '.join(DIALECTS)}",
     )
     parser.add_argument(
         "--json", action="store_true", help="emit the full recommendation as JSON"
@@ -99,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         signals = ReleaseSignals(
-            tests=parse_junit(args.junit),
+            tests=parse_junit(args.junit, dialect=args.junit_dialect),
             coverage=parse_cobertura(args.coverage) if args.coverage else None,
             flakiness=parse_flakysense(args.flaky) if args.flaky else None,
         )

@@ -144,6 +144,52 @@ class TestGateRules:
         assert rec.verdict is Verdict.NO_GO
 
 
+class TestDeclaredDialectJoin:
+    """ADR-004: the declared dialect restores the cross-signal rule on
+    path-shaped classnames, and keeps the ADR-002 safety property."""
+
+    def load(self, samples, dialect: str) -> ReleaseSignals:
+        base = samples / "dialect_playwright"
+        return ReleaseSignals(
+            tests=parse_junit(base / "junit.xml", dialect=dialect),
+            flakiness=parse_flakysense(base / "flakysense-report.json"),
+        )
+
+    def test_default_dialect_blocks_a_flaky_failure_it_should_excuse(self, samples):
+        """The defect, pinned on real Playwright bytes (bug evidence #4): the
+        only failing test IS in the flaky list, yet G1 trips."""
+        rec = ReleaseEvaluator().evaluate(self.load(samples, "pytest"))
+        assert rec.verdict is Verdict.NO_GO
+        g1 = next(g for g in rec.gates if g.gate_id == "G1")
+        assert g1.tripped
+
+    def test_path_dialect_excuses_it_and_caps_at_conditional(self, samples):
+        rec = ReleaseEvaluator().evaluate(self.load(samples, "path"))
+        assert rec.verdict is Verdict.CONDITIONAL_GO
+        assert not next(g for g in rec.gates if g.gate_id == "G1").tripped
+        assert any(c.startswith("excused flaky failure:") for c in rec.conditions)
+
+    def test_path_dialect_keeps_the_no_false_go_property(self):
+        """Same bare test name in two different spec files: the flaky one must
+        not excuse the real failure. The ADR-002 property must survive the new
+        dialect, since `path` keeps the full file prefix in the key."""
+        signals = ReleaseSignals(
+            tests=TestResultsSignal(
+                total=10,
+                passed=9,
+                failed=1,
+                skipped=0,
+                failed_test_ids=["gate/upload-api.spec.ts::[gate] upload"],
+            ),
+            flakiness=FlakinessSignal(
+                flaky_test_ids=["gate/upload-ui.spec.ts::[gate] upload"]
+            ),
+            coverage=CoverageSignal(line_rate=0.90),
+        )
+        rec = ReleaseEvaluator().evaluate(signals)
+        assert rec.verdict is Verdict.NO_GO
+
+
 class FakeLLMClient:
     def __init__(self, response: str = "Narrated rationale.", error: Exception | None = None):
         self.response = response

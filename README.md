@@ -46,11 +46,17 @@ Trois engagements structurent le modèle :
 - **La règle inter-signaux.** Un test en échec que FlakySense identifie comme flaky ne
   déclenche pas G1 : l'échec est *excusé nominativement* dans les conditions du verdict,
   plafonné à `CONDITIONAL GO`. Aucun parseur seul ne peut produire cette décision —
-  elle n'existe que dans la fusion. La jointure repose sur les node ids pytest complets
-  ([ADR-002](docs/adr/ADR-002-test-identity-join.md)) ; un raté de jointure ne peut que
-  durcir le verdict, jamais excuser un échec à tort. Le design rejeté (jointure par nom
-  court) aurait laissé passer un faux GO par collision de noms — contrefactuel vérifié
-  et rejoué en test de régression ([bug evidence #2](docs/bug-evidence.md)).
+  elle n'existe que dans la fusion. La jointure repose sur une identité complète,
+  préfixée du fichier, construite depuis les attributs JUnit dans un **dialecte déclaré**
+  ([ADR-004](docs/adr/ADR-004-junit-dialect-declared.md), qui remplace l'ADR-002) :
+  `pytest` reconstruit un node id depuis un classname pointé, `path` prend tel quel un
+  classname qui est déjà un chemin — `--junit-dialect path` pour un rapport Playwright,
+  Jest ou Vitest. Un raté de jointure ne peut que durcir le verdict, jamais excuser un
+  échec à tort. Le design rejeté (jointure par nom court) aurait laissé passer un faux GO
+  par collision de noms — contrefactuel vérifié et rejoué en test de régression
+  ([bug evidence #2](docs/bug-evidence.md)) ; et deviner le dialecte a été rejeté parce
+  qu'un verrou de release ne doit pas inférer ce qu'on peut lui déclarer — mesure à
+  l'appui ([bug evidence #4](docs/bug-evidence.md)).
 - **`NO GO` exige un blocant nommé.** Le score seul ne peut jamais opposer un veto : un
   score bas sans blocant identifiable est une livraison conditionnelle avec risques
   listés, pas un blocage au ressenti.
@@ -135,12 +141,17 @@ git clone https://github.com/BazanJeremy/ReleaseGuard.git
 cd ReleaseGuard
 python -m venv .venv && source .venv/bin/activate   # Windows : .\.venv\Scripts\Activate.ps1
 pip install -e .[dev]
-python -m pytest        # 89 tests — aucune clé API requise
+python -m pytest        # 110 tests — aucune clé API requise
 
 # les trois scénarios canoniques (codes de sortie attendus : 0, 2, 1)
 releaseguard --junit data/samples/scenario_go/junit.xml --coverage data/samples/scenario_go/coverage.xml --flaky data/samples/scenario_go/flakysense-report.json
 releaseguard --junit data/samples/scenario_no_go/junit.xml --coverage data/samples/scenario_no_go/coverage.xml --flaky data/samples/scenario_no_go/flakysense-report.json
 releaseguard --junit data/samples/scenario_conditional/junit.xml --coverage data/samples/scenario_conditional/coverage.xml --flaky data/samples/scenario_conditional/flakysense-report.json
+
+# un rapport de runner JS : les mêmes octets bloquent sans le dialecte (sortie 2)
+# et passent en conditionnel avec (sortie 1) — ADR-004
+releaseguard --junit data/samples/dialect_playwright/junit.xml --flaky data/samples/dialect_playwright/flakysense-report.json
+releaseguard --junit data/samples/dialect_playwright/junit.xml --flaky data/samples/dialect_playwright/flakysense-report.json --junit-dialect path
 ```
 
 Narration System 2 optionnelle : `pip install -e .[llm]` et définir
@@ -153,9 +164,9 @@ Narration System 2 optionnelle : `pip install -e .[llm]` et définir
 | Langage | Python 3.12+ |
 | Modèles de données | Pydantic v2 |
 | Couche IA (optionnelle) | Anthropic Claude — narration System 2 uniquement |
-| Framework de test | pytest — 89 tests, zéro clé API requise |
+| Framework de test | pytest — 110 tests, zéro clé API requise |
 | CI | GitHub Actions — verrou dogfood bloquant |
-| Décisions d'architecture | 3 ADRs ([docs/adr/](docs/adr/)) + [journal de bugs](docs/bug-evidence.md) |
+| Décisions d'architecture | 4 ADRs ([docs/adr/](docs/adr/)) + [journal de bugs](docs/bug-evidence.md) |
 
 ## Limites connues
 
@@ -163,6 +174,9 @@ Des choix assumés, documentés dans les ADRs :
 
 - **Trois parseurs seulement** (JUnit, Cobertura, FlakySense). Tout nouveau type de
   signal est un point d'extension, pas du périmètre v1.
+- **Le dialecte JUnit se déclare, il ne se devine pas.** Un rapport de runner JS exige
+  `--junit-dialect path` ; l'oublier reste sûr mais durcit le verdict, et rien n'est
+  normalisé d'un dialecte à l'autre ([ADR-004](docs/adr/ADR-004-junit-dialect-declared.md)).
 - **Les pondérations ne sont pas réglables en ligne de commande.** Les seuils le sont ;
   changer les poids est une décision de gouvernance qui passe par un ADR remplaçant,
   pas par un flag de pipeline ([ADR-003](docs/adr/ADR-003-cli-contract.md)).
