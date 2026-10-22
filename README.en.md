@@ -3,7 +3,7 @@
 **Release-readiness agent — fuses test results, coverage, and flakiness signals into a single, explainable GO / NO-GO recommendation.**
 
 [![CI](https://github.com/BazanJeremy/ReleaseGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/BazanJeremy/ReleaseGuard/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-89%20passing-brightgreen?logo=pytest)](tests/)
+[![Tests](https://img.shields.io/badge/tests-110%20passing-brightgreen?logo=pytest)](tests/)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue?logo=python)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
