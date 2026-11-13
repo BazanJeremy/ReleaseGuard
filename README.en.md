@@ -3,13 +3,13 @@
 **Release-readiness agent — fuses test results, coverage, and flakiness signals into a single, explainable GO / NO-GO recommendation.**
 
 [![CI](https://github.com/BazanJeremy/ReleaseGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/BazanJeremy/ReleaseGuard/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-110%20passing-brightgreen?logo=pytest)](tests/)
+[![Tests](https://img.shields.io/badge/tests-118%20passing-brightgreen?logo=pytest)](tests/)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue?logo=python)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 > 🇫🇷 [Version française](README.md)
 
-**Status: ✅ Complete.** 110 tests, zero API keys required, CI-gated by itself (see [Dogfooding](#dogfooding-this-repo-gates-itself)).
+**Status: ✅ Complete.** 118 tests, zero API keys required, CI-gated by itself (see [Dogfooding](#dogfooding-this-repo-gates-itself)).
 
 ## The problem
 
@@ -104,7 +104,7 @@ cd ReleaseGuard
 python -m venv .venv
 source .venv/bin/activate       # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 pip install -e .[dev]
-python -m pytest                # 110 tests, no API key needed
+python -m pytest                # 118 tests, no API key needed
 
 # try the three canonical scenarios (expected exits: 0, 2, 1)
 releaseguard --junit data/samples/scenario_go/junit.xml --coverage data/samples/scenario_go/coverage.xml --flaky data/samples/scenario_go/flakysense-report.json
@@ -154,7 +154,7 @@ data/samples/      # three canonical scenarios (GO / NO GO / CONDITIONAL)
                    # + dialect_playwright: real JS-runner bytes (ADR-004)
 docs/adr/          # architecture decision records
 docs/bug-evidence.md
-tests/             # 110 tests: contracts, parsers, gate rules, CLI, System 2
+tests/             # 118 tests: contracts, parsers, gate rules, CLI, System 2
 ```
 
 ## Related projects

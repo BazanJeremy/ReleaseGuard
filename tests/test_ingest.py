@@ -207,3 +207,22 @@ class TestParseFlakysense:
         report.write_text('{"test_id": "x"}')
         with pytest.raises(ValueError, match="JSON array"):
             parse_flakysense(report)
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            '[{"test_id": "tests/test_x.py::test_a"}]',  # no detection
+            '[{"test_id": "tests/test_x.py::test_a", "detection": {}}]',  # no is_flaky
+            '[{"test_id": "tests/test_x.py::test_a", "detection": null}]',
+            '[{"detection": {"is_flaky": true}}]',  # no test_id
+            '["tests/test_x.py::test_a"]',  # entry is not an object
+            '[{"test_id": "tests/test_x.py::test_a", "detection": {"is_flaky": "yes"}}]',
+        ],
+    )
+    def test_malformed_entry_rejected(self, tmp_path, payload):
+        # Bug evidence #5: these used to escape as KeyError/TypeError, which the
+        # CLI does not map to exit 3.
+        report = tmp_path / "report.json"
+        report.write_text(payload, encoding="utf-8")
+        with pytest.raises(ValueError, match="entry 0"):
+            parse_flakysense(report)
