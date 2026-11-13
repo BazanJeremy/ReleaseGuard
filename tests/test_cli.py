@@ -36,6 +36,29 @@ class TestExitCodes:
         assert main(["--junit", "does/not/exist.xml"]) == 3
         assert "error" in capsys.readouterr().err
 
+    def test_malformed_flaky_report_exits_3_not_1(self, samples, tmp_path, capsys):
+        # Bug evidence #5: a crash exits 1 by Python's default, and 1 means
+        # CONDITIONAL GO here.
+        report = tmp_path / "flaky.json"
+        report.write_text('[{"test_id": "tests/test_x.py::test_a"}]', encoding="utf-8")
+        base = samples / "scenario_conditional"
+        code = main(["--junit", str(base / "junit.xml"), "--flaky", str(report)])
+        assert code == 3
+        assert "error" in capsys.readouterr().err
+
+    def test_unexpected_exception_exits_3_not_1(self, samples, monkeypatch, capsys):
+        # The last-resort guard: whatever breaks, the exit code is never one
+        # that names a verdict.
+        def boom(*args, **kwargs):
+            raise RuntimeError("boom")
+
+        monkeypatch.setattr("releaseguard.cli.parse_junit", boom)
+        base = samples / "scenario_go"
+        assert main(["--junit", str(base / "junit.xml")]) == 3
+        err = capsys.readouterr().err
+        assert "internal error" in err
+        assert "RuntimeError: boom" in err
+
     def test_usage_error_exits_3_not_argparses_2(self, capsys):
         """argparse's default exit 2 would collide with NO GO (ADR-003)."""
         with pytest.raises(SystemExit) as excinfo:

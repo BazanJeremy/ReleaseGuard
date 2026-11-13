@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import traceback
 
 from releaseguard import __version__, policy
 from releaseguard.evaluator import ReleaseEvaluator
@@ -111,6 +112,22 @@ def render_text(rec: ReleaseRecommendation) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the gate; never let a crash leave through a verdict's exit code.
+
+    An uncaught exception makes Python exit 1, and 1 means CONDITIONAL GO:
+    a CI gate on ``-le 1`` would ship on a crash. Anything unexpected is
+    therefore reported with its traceback and mapped to exit 3. argparse's
+    ``SystemExit`` is not an ``Exception`` and passes through untouched.
+    """
+    try:
+        return _run(argv)
+    except Exception:
+        traceback.print_exc()
+        print("releaseguard: internal error (see traceback above)", file=sys.stderr)
+        return EXIT_ERROR
+
+
+def _run(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         signals = ReleaseSignals(
