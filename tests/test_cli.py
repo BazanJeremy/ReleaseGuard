@@ -129,7 +129,7 @@ class TestPolicyOverrides:
 
 
 class TestJUnitDialectFlag:
-    """ADR-004: --junit-dialect is a declaration about the artifact, not a
+    """ADR-004/005: --junit-dialect is a declaration about the artifact, not a
     threshold - it cannot move the gate's definition of "release ready"."""
 
     def dialect_cli(self, samples, *extra: str) -> int:
@@ -142,13 +142,13 @@ class TestJUnitDialectFlag:
             ]
         )
 
-    def test_default_is_pytest_and_blocks(self, samples, capsys):
-        assert self.dialect_cli(samples) == 2
-        assert "[BLOCK] G1" in capsys.readouterr().out
-
-    def test_path_dialect_ships_conditional(self, samples, capsys):
-        assert self.dialect_cli(samples, "--junit-dialect", "path") == 1
+    def test_default_is_path_and_ships_conditional(self, samples, capsys):
+        assert self.dialect_cli(samples) == 1
         assert "excused flaky failure:" in capsys.readouterr().out
+
+    def test_pytest_dialect_blocks_a_path_shaped_report(self, samples, capsys):
+        assert self.dialect_cli(samples, "--junit-dialect", "pytest") == 2
+        assert "[BLOCK] G1" in capsys.readouterr().out
 
     def test_invalid_dialect_exits_3_not_2(self, samples, capsys):
         """A typo must never read as NO GO (ADR-003's exit-code rule)."""
@@ -156,7 +156,34 @@ class TestJUnitDialectFlag:
             self.dialect_cli(samples, "--junit-dialect", "pytest-ish")
         assert exit_info.value.code == 3
 
-    def test_explicit_pytest_matches_the_default(self, samples):
-        assert self.dialect_cli(samples, "--junit-dialect", "pytest") == self.dialect_cli(
+    def test_explicit_path_matches_the_default(self, samples):
+        assert self.dialect_cli(samples, "--junit-dialect", "path") == self.dialect_cli(
             samples
         )
+
+
+class TestPytestFlakysenseContract:
+    """ADR-005, bug evidence #6: real bytes. `contract_pytest` holds a JUnit
+    report written by pytest 9.1.1 with its default options, and the report
+    FlakySense produced from six such runs. Two failures, both flaky."""
+
+    def contract_cli(self, samples, *extra: str) -> int:
+        base = samples / "contract_pytest"
+        return main(
+            [
+                "--junit", str(base / "junit.xml"),
+                "--flaky", str(base / "flakysense-report.json"),
+                *extra,
+            ]
+        )
+
+    def test_default_invocation_excuses_both_flaky_failures(self, samples, capsys):
+        assert self.contract_cli(samples) == 1
+        out = capsys.readouterr().out
+        assert "excused flaky failure: tests.test_api.TestLogin::test_ok" in out
+        assert "excused flaky failure: tests.test_api::test_plain" in out
+
+    def test_pytest_dialect_joins_nothing_on_the_same_bytes(self, samples, capsys):
+        """The defect: what the default did before ADR-005."""
+        assert self.contract_cli(samples, "--junit-dialect", "pytest") == 2
+        assert "2 non-flaky failure(s)" in capsys.readouterr().out

@@ -1,13 +1,13 @@
 [
   {
-    "test_id": "tests/test_search.py::test_search_pagination",
+    "test_id": "tests.test_search::test_search_pagination",
     "detection": {
-      "test_id": "tests/test_search.py::test_search_pagination",
+      "test_id": "tests.test_search::test_search_pagination",
       "score": 0.68,
       "is_flaky": true,
       "evidence": [
         {
-          "test_id": "tests/test_search.py::test_search_pagination",
+          "test_id": "tests.test_search::test_search_pagination",
           "run_id": "ci-run-1038",
           "status": "failed",
           "duration_s": 7.104,
@@ -15,7 +15,7 @@
           "execution_index": 4
         },
         {
-          "test_id": "tests/test_search.py::test_search_pagination",
+          "test_id": "tests.test_search::test_search_pagination",
           "run_id": "ci-run-1039",
           "status": "passed",
           "duration_s": 2.213,
@@ -26,7 +26,7 @@
       "method": "rule_based_v1"
     },
     "classification": {
-      "test_id": "tests/test_search.py::test_search_pagination",
+      "test_id": "tests.test_search::test_search_pagination",
       "cause": "timing",
       "confidence": 0.62,
       "signals": ["duration variance 6.1x median", "failures cluster on loaded runners"]
@@ -38,14 +38,14 @@
     "created_at": "2026-07-10T08:57:31Z"
   },
   {
-    "test_id": "tests/test_cache.py::test_cache_eviction",
+    "test_id": "tests.test_cache::test_cache_eviction",
     "detection": {
-      "test_id": "tests/test_cache.py::test_cache_eviction",
+      "test_id": "tests.test_cache::test_cache_eviction",
       "score": 0.51,
       "is_flaky": true,
       "evidence": [
         {
-          "test_id": "tests/test_cache.py::test_cache_eviction",
+          "test_id": "tests.test_cache::test_cache_eviction",
           "run_id": "ci-run-1036",
           "status": "failed",
           "duration_s": 1.602,
@@ -53,7 +53,7 @@
           "execution_index": 7
         },
         {
-          "test_id": "tests/test_cache.py::test_cache_eviction",
+          "test_id": "tests.test_cache::test_cache_eviction",
           "run_id": "ci-run-1037",
           "status": "passed",
           "duration_s": 1.588,
@@ -64,7 +64,7 @@
       "method": "rule_based_v1"
     },
     "classification": {
-      "test_id": "tests/test_cache.py::test_cache_eviction",
+      "test_id": "tests.test_cache::test_cache_eviction",
       "cause": "ordering",
       "confidence": 0.54,
       "signals": ["fails only when executed late in the suite", "shared cache state suspected"]
