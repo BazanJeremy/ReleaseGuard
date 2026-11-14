@@ -65,9 +65,9 @@ def build_parser() -> argparse.ArgumentParser:
         choices=DIALECTS,
         default=DEFAULT_DIALECT,
         metavar="NAME",
-        help="how JUnit classname carries test identity (ADR-004): "
-        f"'pytest' dotted module path (default), 'path' already a file path "
-        f"as emitted by JS runners. Choices: {', '.join(DIALECTS)}",
+        help="how test identity is derived from JUnit classname (ADR-005): "
+        f"'path' classname::name verbatim, as FlakySense emits it (default); "
+        f"'pytest' a reconstructed node id. Choices: {', '.join(DIALECTS)}",
     )
     parser.add_argument(
         "--json", action="store_true", help="emit the full recommendation as JSON"

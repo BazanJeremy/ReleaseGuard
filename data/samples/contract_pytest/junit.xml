@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="3" time="0.110" timestamp="2026-11-14T06:23:04.312943+01:00" hostname="ci-runner"><testcase classname="tests.test_api.TestLogin" name="test_ok" time="0.001"><failure message="assert (6 % 2) == 1">self = &lt;tests.test_api.TestLogin object at 0x00000177CE0A2990&gt;
+
+    def test_ok(self):
+        # Fails on even runs: an intermittent failure inside a class.
+&gt;       assert RUN % 2 == 1
+E       assert (6 % 2) == 1
+
+tests\test_api.py:9: AssertionError</failure></testcase><testcase classname="tests.test_api" name="test_plain" time="0.001"><failure message="assert (6 % 2) == 1">def test_plain():
+        # Fails on even runs: an intermittent failure at module level.
+&gt;       assert RUN % 2 == 1
+E       assert (6 % 2) == 1
+
+tests\test_api.py:14: AssertionError</failure></testcase><testcase classname="tests.test_api" name="test_stable" time="0.000" /></testsuite></testsuites>

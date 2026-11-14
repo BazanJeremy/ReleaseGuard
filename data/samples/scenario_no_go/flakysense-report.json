@@ -1,13 +1,13 @@
 [
   {
-    "test_id": "tests/test_export.py::test_csv_export",
+    "test_id": "tests.test_export::test_csv_export",
     "detection": {
-      "test_id": "tests/test_export.py::test_csv_export",
+      "test_id": "tests.test_export::test_csv_export",
       "score": 0.55,
       "is_flaky": true,
       "evidence": [
         {
-          "test_id": "tests/test_export.py::test_csv_export",
+          "test_id": "tests.test_export::test_csv_export",
           "run_id": "ci-run-1041",
           "status": "failed",
           "duration_s": 9.812,
@@ -15,7 +15,7 @@
           "execution_index": 6
         },
         {
-          "test_id": "tests/test_export.py::test_csv_export",
+          "test_id": "tests.test_export::test_csv_export",
           "run_id": "ci-run-1042",
           "status": "passed",
           "duration_s": 3.371,
@@ -26,7 +26,7 @@
       "method": "rule_based_v1"
     },
     "classification": {
-      "test_id": "tests/test_export.py::test_csv_export",
+      "test_id": "tests.test_export::test_csv_export",
       "cause": "timing",
       "confidence": 0.58,
       "signals": ["duration variance 2.9x median", "intermittent failures across runs"]

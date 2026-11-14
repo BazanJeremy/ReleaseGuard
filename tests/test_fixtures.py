@@ -114,8 +114,8 @@ class TestDialectFixtureIntegrity:
             assert (SAMPLES / self.DIALECT / artifact).is_file()
 
     def test_no_file_attribute(self):
-        """FlakySense prefers a `file` attribute over `classname`; Playwright
-        emits none, which is why the classname carries the path at all."""
+        """Playwright emits no `file` attribute: the classname carries the
+        path, and that classname is the identity FlakySense reports."""
         assert [c for c in self.cases() if c.get("file")] == []
 
     def test_classnames_are_paths_not_dotted_modules(self):

@@ -42,12 +42,12 @@ class TestParseJunit:
         signal = parse_junit(samples / "scenario_go" / "junit.xml")
         assert (signal.total, signal.passed, signal.failed, signal.skipped) == (8, 8, 0, 0)
 
-    def test_no_go_scenario_failed_ids_are_node_ids(self, samples):
+    def test_no_go_scenario_failed_ids_are_classname_and_name(self, samples):
         signal = parse_junit(samples / "scenario_no_go" / "junit.xml")
         assert signal.failed == 2
         assert signal.failed_test_ids == [
-            "tests/test_payment.py::test_refund_idempotency",
-            "tests/test_payment.py::test_currency_rounding",
+            "tests.test_payment::test_refund_idempotency",
+            "tests.test_payment::test_currency_rounding",
         ]
 
     def test_bare_testsuite_root_accepted(self, tmp_path):
@@ -65,7 +65,7 @@ class TestParseJunit:
         )
         signal = parse_junit(report)
         assert signal.failed == 1
-        assert signal.failed_test_ids == ["tests/test_x.py::test_a"]
+        assert signal.failed_test_ids == ["tests.test_x::test_a"]
 
     def test_skipped_counted_separately(self, tmp_path):
         report = tmp_path / "junit.xml"
@@ -94,11 +94,14 @@ class TestParseJunit:
 
 
 class TestJUnitDialect:
-    """ADR-004: the dialect is declared, never guessed. The `path` dialect
-    takes a path-shaped classname verbatim; `pytest` stays the default."""
+    """ADR-004: the dialect is declared, never guessed. ADR-005: `path`,
+    which takes classname verbatim, is the default; `pytest` reconstructs."""
 
-    def test_default_dialect_is_pytest_reconstruction(self):
-        assert case_identity("tests.test_api", "test_ok") == node_id(
+    def test_default_dialect_is_path(self):
+        assert case_identity("tests.test_api", "test_ok") == "tests.test_api::test_ok"
+
+    def test_pytest_dialect_reconstructs_a_node_id(self):
+        assert case_identity("tests.test_api", "test_ok", dialect="pytest") == node_id(
             "tests.test_api", "test_ok"
         )
 
@@ -130,7 +133,7 @@ class TestJUnitDialect:
         """Why the dialect exists (bug evidence #4): a path-shaped classname
         run through the pytest heuristic yields an id that can never match."""
         assert (
-            case_identity("invariants/zero-js.spec.ts", "[gate] no js")
+            case_identity("invariants/zero-js.spec.ts", "[gate] no js", dialect="pytest")
             == "invariants/zero-js/spec/ts.py::[gate] no js"
         )
 
@@ -155,9 +158,11 @@ class TestJUnitDialect:
             "› aucun fichier JavaScript dans dist/"
         ]
 
-    def test_parse_junit_default_dialect_breaks_the_real_fixture(self, samples):
-        """The same bytes under the default dialect: the join key is mangled."""
-        signal = parse_junit(samples / "dialect_playwright" / "junit.xml")
+    def test_parse_junit_pytest_dialect_breaks_the_real_fixture(self, samples):
+        """The same bytes under the pytest dialect: the join key is mangled."""
+        signal = parse_junit(
+            samples / "dialect_playwright" / "junit.xml", dialect="pytest"
+        )
         assert signal.failed_test_ids[0].startswith("invariants\\zero-js/spec/ts.py::")
 
 
@@ -186,8 +191,8 @@ class TestParseFlakysense:
     def test_conditional_scenario_flaky_ids(self, samples):
         signal = parse_flakysense(samples / "scenario_conditional" / "flakysense-report.json")
         assert signal.flaky_test_ids == [
-            "tests/test_search.py::test_search_pagination",
-            "tests/test_cache.py::test_cache_eviction",
+            "tests.test_search::test_search_pagination",
+            "tests.test_cache::test_cache_eviction",
         ]
         assert signal.source == "flakysense"
 

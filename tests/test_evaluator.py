@@ -49,7 +49,7 @@ class TestCanonicalScenarios:
         assert rec.score == pytest.approx(0.62, abs=0.001)
         assert not any(g.tripped for g in rec.gates)
         assert any(
-            "excused flaky failure: tests/test_search.py::test_search_pagination" in c
+            "excused flaky failure: tests.test_search::test_search_pagination" in c
             for c in rec.conditions
         )
         assert rec.generated_by == "system1"
@@ -155,7 +155,7 @@ class TestDeclaredDialectJoin:
             flakiness=parse_flakysense(base / "flakysense-report.json"),
         )
 
-    def test_default_dialect_blocks_a_flaky_failure_it_should_excuse(self, samples):
+    def test_pytest_dialect_blocks_a_flaky_failure_it_should_excuse(self, samples):
         """The defect, pinned on real Playwright bytes (bug evidence #4): the
         only failing test IS in the flaky list, yet G1 trips."""
         rec = ReleaseEvaluator().evaluate(self.load(samples, "pytest"))

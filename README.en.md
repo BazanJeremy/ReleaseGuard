@@ -3,13 +3,13 @@
 **Release-readiness agent — fuses test results, coverage, and flakiness signals into a single, explainable GO / NO-GO recommendation.**
 
 [![CI](https://github.com/BazanJeremy/ReleaseGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/BazanJeremy/ReleaseGuard/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-118%20passing-brightgreen?logo=pytest)](tests/)
+[![Tests](https://img.shields.io/badge/tests-121%20passing-brightgreen?logo=pytest)](tests/)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue?logo=python)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 > 🇫🇷 [Version française](README.md)
 
-**Status: ✅ Complete.** 118 tests, zero API keys required, CI-gated by itself (see [Dogfooding](#dogfooding-this-repo-gates-itself)).
+**Status: ✅ Complete.** 121 tests, zero API keys required, CI-gated by itself (see [Dogfooding](#dogfooding-this-repo-gates-itself)).
 
 ## The problem
 
@@ -34,7 +34,7 @@ Signals:
   flakiness  0.00 (weight 0.25) 2 flaky of 10 executed tests
 
 Conditions:
-  - excused flaky failure: tests/test_search.py::test_search_pagination (source: flakysense)
+  - excused flaky failure: tests.test_search::test_search_pagination (source: flakysense)
   - weakest signal: flakiness at 0.00 (2 flaky of 10 executed tests)
 
 Rationale (system1):
@@ -104,17 +104,21 @@ cd ReleaseGuard
 python -m venv .venv
 source .venv/bin/activate       # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 pip install -e .[dev]
-python -m pytest                # 118 tests, no API key needed
+python -m pytest                # 121 tests, no API key needed
 
 # try the three canonical scenarios (expected exits: 0, 2, 1)
 releaseguard --junit data/samples/scenario_go/junit.xml --coverage data/samples/scenario_go/coverage.xml --flaky data/samples/scenario_go/flakysense-report.json
 releaseguard --junit data/samples/scenario_no_go/junit.xml --coverage data/samples/scenario_no_go/coverage.xml --flaky data/samples/scenario_no_go/flakysense-report.json
 releaseguard --junit data/samples/scenario_conditional/junit.xml --coverage data/samples/scenario_conditional/coverage.xml --flaky data/samples/scenario_conditional/flakysense-report.json
 
-# a JS-runner report: the same bytes block without the dialect (exit 2) and
-# ship conditionally with it (exit 1) - ADR-004
+# real pytest + FlakySense bytes: conditional by default (exit 1), blocked when the
+# pytest dialect is declared, which joins nothing (exit 2) - ADR-005
+releaseguard --junit data/samples/contract_pytest/junit.xml --flaky data/samples/contract_pytest/flakysense-report.json
+releaseguard --junit data/samples/contract_pytest/junit.xml --flaky data/samples/contract_pytest/flakysense-report.json --junit-dialect pytest
+
+# a JS-runner report: the same pair on real Playwright bytes - ADR-004
 releaseguard --junit data/samples/dialect_playwright/junit.xml --flaky data/samples/dialect_playwright/flakysense-report.json
-releaseguard --junit data/samples/dialect_playwright/junit.xml --flaky data/samples/dialect_playwright/flakysense-report.json --junit-dialect path
+releaseguard --junit data/samples/dialect_playwright/junit.xml --flaky data/samples/dialect_playwright/flakysense-report.json --junit-dialect pytest
 ```
 
 Optional System 2 narration: `pip install -e .[llm]` and set `ANTHROPIC_API_KEY`. Everything above works identically without it.
@@ -126,7 +130,8 @@ Optional System 2 narration: `pip install -e .[llm]` and set `ANTHROPIC_API_KEY`
 | [ADR-001](docs/adr/ADR-001-release-gate-model.md) | Release gate model: hard gates + weighted score, no pure averaging |
 | [ADR-002](docs/adr/ADR-002-test-identity-join.md) | Test identity join: reconstructed node ids, conservative on miss — **superseded by ADR-004** |
 | [ADR-003](docs/adr/ADR-003-cli-contract.md) | CLI contract: verdict-mapped exit codes, ASCII output, threshold flags only |
-| [ADR-004](docs/adr/ADR-004-junit-dialect-declared.md) | Test identity join: JUnit dialect declared, not guessed; nothing normalized |
+| [ADR-004](docs/adr/ADR-004-junit-dialect-declared.md) | Test identity join: JUnit dialect declared, not guessed; nothing normalized — **its default superseded by ADR-005** |
+| [ADR-005](docs/adr/ADR-005-default-dialect-path.md) | Default dialect is `path`: `classname::name` verbatim, the identity FlakySense emits |
 
 Bugs caught by the project's own tests and runs are documented in [docs/bug-evidence.md](docs/bug-evidence.md) — including the first CI run catching untracked fixtures, the first dogfood run catching an output-encoding violation, and a measurement showing the identity join was dead on every test of a real Playwright report.
 
@@ -135,7 +140,7 @@ Bugs caught by the project's own tests and runs are documented in [docs/bug-evid
 Deliberate cuts, documented in the ADRs:
 
 - **Three parsers only** (JUnit, Cobertura, FlakySense). Any new signal type is an extension point, not v1 scope.
-- **The JUnit dialect is declared, not detected.** A JS-runner report needs `--junit-dialect path`; forgetting it is safe but strict, and nothing is normalized across dialects ([ADR-004](docs/adr/ADR-004-junit-dialect-declared.md)).
+- **The JUnit dialect is declared, not detected.** The default, `path`, joins FlakySense reports; a producer naming tests by pytest node id needs `--junit-dialect pytest`. Getting it wrong is safe but strict, and nothing is normalized across dialects ([ADR-004](docs/adr/ADR-004-junit-dialect-declared.md), [ADR-005](docs/adr/ADR-005-default-dialect-path.md)).
 - **Weights are not CLI-tunable.** Thresholds are; changing the weights is a governance decision that goes through a superseding ADR, not a pipeline flag ([ADR-003](docs/adr/ADR-003-cli-contract.md)).
 - **No containerization.** This repo's deployment story is its own CI gate (dogfooding); container packaging is demonstrated by [FlakySense](https://github.com/BazanJeremy/flakysense).
 - **AI narration requires a key.** Without `ANTHROPIC_API_KEY`, the deterministic System 1 rationale is rendered — the verdict is identical either way.
@@ -152,9 +157,10 @@ src/releaseguard/
   cli.py           # argparse CLI, verdict-mapped exit codes
 data/samples/      # three canonical scenarios (GO / NO GO / CONDITIONAL)
                    # + dialect_playwright: real JS-runner bytes (ADR-004)
+                   # + contract_pytest: real pytest + FlakySense bytes (ADR-005)
 docs/adr/          # architecture decision records
 docs/bug-evidence.md
-tests/             # 118 tests: contracts, parsers, gate rules, CLI, System 2
+tests/             # 121 tests: contracts, parsers, gate rules, CLI, System 2
 ```
 
 ## Related projects

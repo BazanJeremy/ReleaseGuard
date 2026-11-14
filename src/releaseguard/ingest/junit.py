@@ -1,4 +1,4 @@
-"""JUnit XML parser — test results with a dialect-aware test identity (ADR-004).
+"""JUnit XML parser — test results with a dialect-aware test identity (ADR-005).
 
 Counts are derived from ``<testcase>`` elements, never from suite attributes:
 real-world artifacts drift, the elements are the ground truth. Failures and
@@ -6,9 +6,10 @@ errors both count as failed; a failing test's identity is derived so the
 evaluator can join it against the flakiness signal.
 
 Two ``classname`` conventions exist in the wild and cannot be told apart
-safely, so the dialect is declared, never guessed (ADR-004): ``pytest``
-reconstructs a node id from a dotted classname (ADR-002, the default), while
-``path`` takes an already-path-shaped classname verbatim.
+safely, so the dialect is declared, never guessed (ADR-004): ``path`` takes
+``classname`` verbatim — the default since ADR-005, because it is the
+identity FlakySense emits — while ``pytest`` reconstructs a node id from a
+dotted classname (ADR-002).
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ from releaseguard.models import TestResultsSignal
 
 JUnitDialect = Literal["pytest", "path"]
 DIALECTS: tuple[str, ...] = get_args(JUnitDialect)
-DEFAULT_DIALECT: JUnitDialect = "pytest"
+DEFAULT_DIALECT: JUnitDialect = "path"
 
 
 def node_id(classname: str, name: str) -> str:
