@@ -87,6 +87,24 @@ class TestGateRules:
         assert rec.score >= policy.GO_THRESHOLD
         assert rec.verdict is Verdict.CONDITIONAL_GO
 
+    def test_excused_cap_rationale_names_the_cap_not_a_low_score(self):
+        """The rationale must give the real cause: the cap, not the score."""
+        signals = self.make_signals(
+            tests=TestResultsSignal(
+                total=50,
+                passed=49,
+                failed=1,
+                skipped=0,
+                failed_test_ids=["tests/test_x.py::test_a"],
+            ),
+            flakiness=FlakinessSignal(flaky_test_ids=["tests/test_x.py::test_a"]),
+        )
+        rec = ReleaseEvaluator().evaluate(signals)
+        assert rec.score >= policy.GO_THRESHOLD
+        assert "below GO threshold" not in rec.rationale
+        assert "capped by 1 excused flaky failure(s)" in rec.rationale
+        assert rec.rationale.isascii()
+
     def test_missing_flakiness_signal_makes_all_failures_real(self):
         signals = self.make_signals(
             tests=TestResultsSignal(
