@@ -108,7 +108,7 @@ class ReleaseEvaluator:
         # Excused failures cap the verdict at CONDITIONAL GO (ADR-001).
         conditions = conditions + self._weak_spot_conditions(signal_scores, score)
         rationale, generated_by = self._narrate_conditional(
-            gates, signal_scores, conditions, score
+            gates, signal_scores, conditions, score, len(excused)
         )
         return self._recommend(
             verdict=Verdict.CONDITIONAL_GO,
@@ -255,10 +255,19 @@ class ReleaseEvaluator:
         signal_scores: list[SignalScore],
         conditions: list[str],
         score: float,
+        excused_count: int,
     ) -> tuple[str, GenerationPath]:
+        # Two causes reach CONDITIONAL GO: a score below the threshold, and
+        # excused flaky failures, which cap even a passing score (ADR-001).
+        if score < self._go_threshold:
+            reason = f"score {score:.2f} below GO threshold {self._go_threshold:.2f}"
+        else:
+            reason = (
+                f"score {score:.2f} meets GO threshold {self._go_threshold:.2f}, "
+                f"capped by {excused_count} excused flaky failure(s)"
+            )
         fallback = (
-            f"No blocker; score {score:.2f} below GO threshold "
-            f"{self._go_threshold:.2f}. Conditions: "
+            f"No blocker; {reason}. Conditions: "
             + ("; ".join(conditions) if conditions else "none")
         )
         if self._llm_client is None:

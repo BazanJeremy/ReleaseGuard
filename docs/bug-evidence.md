@@ -51,3 +51,11 @@ mattered.
 - **Why it hid:** the canonical scenarios paired a JUnit report without `file` with a hand-written flakiness report using `tests/test_search.py::…` identities. No real run produces that pairing, so the suite kept passing on a join that was dead in the field. And the failure direction was the safe one, as in #4: excess caution draws no complaint.
 - **Fix:** `path` is the default dialect ([ADR-005](adr/ADR-005-default-dialect-path.md)); `pytest` stays available. The canonical flakiness reports now carry the identities FlakySense really emits. Pinned by the CONDITIONAL GO / NO GO pair on the real bytes and by the Playwright fixture shipping conditionally with no flag (suite: 118 -> 121).
 - **What this corrects in #4:** #4 concluded that `pytest` could stay the default. That conclusion was never measured on a pytest report.
+
+## #7 — The CONDITIONAL GO rationale blamed the score for an excused failure (2026-11-16)
+
+- **Caught by:** a before/after measurement of a downstream nightly's pinned tools on a constructed history (one test failing every other run, the last one included) — not by this project's tests, which pinned the verdict of the excused-failure cap but never its rationale.
+- **What happened:** two causes reach CONDITIONAL GO — a score below the threshold, and excused flaky failures, which cap even a passing score (ADR-001). The System 1 fallback rationale had a single template for both: "No blocker; score X below GO threshold Y".
+- **Measured, not inferred:** 50 tests, 1 failing and declared flaky. Verdict CONDITIONAL GO, score 0.975, rationale "No blocker; score 0.97 below GO threshold 0.80" — false, 0.97 is above 0.80. After the fix: "No blocker; score 0.97 meets GO threshold 0.80, capped by 1 excused flaky failure(s)".
+- **Why it mattered:** the verdict, score and exit code were right; only the text was wrong. But the rationale is the part a human reads, and it pointed them at the score — the one signal that was fine — instead of the flaky failure.
+- **Fix:** the fallback names the cause it has: the below-threshold wording is unchanged when the score is below, and the cap is named otherwise. The System 2 path is untouched. Pinned by a test asserting the cap is named and "below GO threshold" is absent (suite: 121 -> 122).

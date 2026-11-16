@@ -4,7 +4,7 @@
 en un verdict GO / NO GO argumenté, prêt à bloquer un pipeline.**
 
 [![CI](https://github.com/BazanJeremy/ReleaseGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/BazanJeremy/ReleaseGuard/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-121%20passing-brightgreen?logo=pytest)](tests/)
+[![Tests](https://img.shields.io/badge/tests-122%20passing-brightgreen?logo=pytest)](tests/)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue?logo=python)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
@@ -144,7 +144,7 @@ git clone https://github.com/BazanJeremy/ReleaseGuard.git
 cd ReleaseGuard
 python -m venv .venv && source .venv/bin/activate   # Windows : .\.venv\Scripts\Activate.ps1
 pip install -e .[dev]
-python -m pytest        # 121 tests — aucune clé API requise
+python -m pytest        # 122 tests — aucune clé API requise
 
 # les trois scénarios canoniques (codes de sortie attendus : 0, 2, 1)
 releaseguard --junit data/samples/scenario_go/junit.xml --coverage data/samples/scenario_go/coverage.xml --flaky data/samples/scenario_go/flakysense-report.json
@@ -171,7 +171,7 @@ Narration System 2 optionnelle : `pip install -e .[llm]` et définir
 | Langage | Python 3.12+ |
 | Modèles de données | Pydantic v2 |
 | Couche IA (optionnelle) | Anthropic Claude — narration System 2 uniquement |
-| Framework de test | pytest — 121 tests, zéro clé API requise |
+| Framework de test | pytest — 122 tests, zéro clé API requise |
 | CI | GitHub Actions — verrou dogfood bloquant |
 | Décisions d'architecture | 5 ADRs ([docs/adr/](docs/adr/)) + [journal de bugs](docs/bug-evidence.md) |
 
